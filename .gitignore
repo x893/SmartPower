@@ -1,0 +1,36 @@
+# Object files
+*.o
+*.ko
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+
+build/
+MDK-ARM/SmartPower
+*.uvguix.*
+*.uvgui.*
+*.uvproj.*
+*.uvprojx.saved_uv4
+*.uvoptx
+*.uvopt
+*.dep
+*.bak
+JLinkLog.txt
+JLinkSettings.ini
+*.b#?
+*.s#?
+*.tmp
+*.custom
+.mxproject
