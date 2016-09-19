@@ -33,6 +33,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l1xx_hal.h"
 #include "adc.h"
+#include "crc.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "tim.h"
@@ -43,6 +44,7 @@
 
 #include "main.h"
 #include "usart_board.h"
+#include "eeprom.h"
 
 #include "MAX5400.h"
 #include "MAX16936.h"
@@ -120,7 +122,14 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	uint8_t MAX5400_0_Value;
+
+	HAL_DBGMCU_EnableDBGSleepMode();
+	HAL_DBGMCU_EnableDBGStopMode();
+	HAL_DBGMCU_EnableDBGSleepMode();
+	
+	__HAL_DBGMCU_FREEZE_I2C2_TIMEOUT();
+	__HAL_DBGMCU_FREEZE_I2C1_TIMEOUT();
+	__HAL_DBGMCU_FREEZE_WWDG();
 
   /* USER CODE END 1 */
 
@@ -141,6 +150,7 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM3_Init();
   MX_I2C2_Init();
+  MX_CRC_Init();
 
   /* USER CODE BEGIN 2 */
 
@@ -149,32 +159,29 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-	HAL_ADC_Start_IT(&hadc);	// Start ADC conversion
+	Config_Init();
 
-	// Set default to 5V
-	MAX5400_0_Value = 79;		// 255 =  2.81V
-								// 183 =  3.31V
-								//  81 =  5.02V
-								//   0 = 10.55V
-	MAX5400_Set(0, MAX5400_0_Value);
+	MAX16936_Disable(0);
+	MAX16936_Disable(1);
+	MAX5400_Set(0, Config.MAX5400_0);
+	MAX5400_Set(1, Config.MAX5400_1);
 	MAX16936_Enable(0);
+	MAX16936_Enable(1);
+	
+	Config_Save();
 
+	HAL_ADC_Start_IT(&hadc);	// Start ADC conversion
 	usart2_start();
 
+	uint8_t data;
 	while (1)
 	{
-		if (usart2_available())
+		while (usart2_read(&data))
 		{
-			uint8_t data;
-			if (usart2_read(&data))
-			{
-				usart2_send(&data, 1);
-			}
+			usart2_send(&data, 1);
+			continue;
 		}
-		else
-		{
-			__WFI();
-		}
+		__WFI();
 
 		/*
 		LED_ON();

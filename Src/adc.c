@@ -103,7 +103,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     HAL_GPIO_Init(KEY_GPIO_Port, &GPIO_InitStruct);
 
     /* Peripheral interrupt init */
-    HAL_NVIC_SetPriority(ADC1_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(ADC1_IRQn, 0, 4);
     HAL_NVIC_EnableIRQ(ADC1_IRQn);
   /* USER CODE BEGIN ADC1_MspInit 1 */
 

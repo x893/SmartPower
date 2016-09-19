@@ -5,6 +5,7 @@
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define ADC_TIMEOUT		20
 #define ADC_ERROR		0x0001

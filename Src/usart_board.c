@@ -152,3 +152,10 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 		return;
 	}
 }
+
+int stdout_putchar (int ch)
+{
+	uint8_t data = ch;
+	usart2_send(&data, 1);
+	return ch;
+}
