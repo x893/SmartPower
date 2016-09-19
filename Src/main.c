@@ -41,6 +41,9 @@
 
 /* USER CODE BEGIN Includes */
 
+#include "main.h"
+#include "usart_board.h"
+
 #include "MAX5400.h"
 #include "MAX16936.h"
 #include "MAX9611.h"
@@ -53,13 +56,6 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
-#define ADC_TIMEOUT		20
-
-typedef struct {
-	uint16_t ADC_Value;
-	uint16_t ADC_Timeout;
-} Context_t;
 
 Context_t Context;
 
@@ -115,7 +111,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 
 void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
 {
-	
+	Context.Errors |= ADC_ERROR;
 }
 
 /* USER CODE END 0 */
@@ -154,28 +150,38 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
 	HAL_ADC_Start_IT(&hadc);	// Start ADC conversion
-	
-	MAX5400_0_Value = 255;		// 255 =  2.81V
+
+	// Set default to 5V
+	MAX5400_0_Value = 79;		// 255 =  2.81V
 								// 183 =  3.31V
 								//  81 =  5.02V
 								//   0 = 10.55V
+	MAX5400_Set(0, MAX5400_0_Value);
+	MAX16936_Enable(0);
+
+	usart2_start();
+
 	while (1)
 	{
-		MAX5400_Set(0, MAX5400_0_Value);
-		MAX16936_Enable(0);
+		if (usart2_available())
+		{
+			uint8_t data;
+			if (usart2_read(&data))
+			{
+				usart2_send(&data, 1);
+			}
+		}
+		else
+		{
+			__WFI();
+		}
 
+		/*
 		LED_ON();
 		HAL_Delay(250);
 		LED_OFF();
 		HAL_Delay(250);
-
-		if (MAX5400_0_Value == 0)
-		{
-			MAX16936_Disable(0);
-			HAL_Delay(5000);
-		}
-		MAX5400_0_Value--;
-
+		*/
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */

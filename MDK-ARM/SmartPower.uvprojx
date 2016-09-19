@@ -510,11 +510,6 @@
               <FilePath>../Src/rtc.c</FilePath>
             </File>
             <File>
-              <FileName>usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Src/usart.c</FilePath>
-            </File>
-            <File>
               <FileName>stm32l1xx_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Src/stm32l1xx_it.c</FilePath>
@@ -540,14 +535,24 @@
               <FilePath>../Src/i2c.c</FilePath>
             </File>
             <File>
-              <FileName>tim.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Src/tim.c</FilePath>
-            </File>
-            <File>
               <FileName>i2c_board.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Src\i2c_board.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart_board.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\usart_board.c</FilePath>
+            </File>
+            <File>
+              <FileName>tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/tim.c</FilePath>
             </File>
             <File>
               <FileName>MAX16936.c</FileName>
