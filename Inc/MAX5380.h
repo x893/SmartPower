@@ -1,5 +1,5 @@
-#ifndef __MAX5400_H__
-#define __MAX5400_H__
+#ifndef __MAX5380_H__
+#define __MAX5380_H__
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -16,8 +16,12 @@
 	extern "C" {
 #endif
 
-uint8_t MAX5380_Set(uint8_t device, uint8_t value);
-uint8_t MAX5380_Shutdown(uint8_t device);
+bool PS_IsConnect(uint8_t device);
+bool PS_IsNotConnect(uint8_t device);
+
+void MAX5380_Init(void);
+bool MAX5380_Set(uint8_t device, uint8_t value);
+bool MAX5380_Shutdown(uint8_t device);
 		
 #ifdef __cplusplus
 	}

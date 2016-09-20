@@ -1,71 +1,42 @@
 #include "MAX5380.h"
+#include "i2c_board.h"
 
+//	 Low-Power, 8-Bit DACs with 2-Wire Serial Interface in SOT23
+//
 //	https://datasheets.maximintegrated.com/en/ds/MAX5380-MAX5382.pdf
 
+#define PS_BOARD_COUNT	2
+
+typedef __packed struct {
+	uint8_t MAX5380_Address;
+} PS_Board_t;
+
+PS_Board_t PS_Boards[PS_BOARD_COUNT];
+
 /****************************************************************
  *
- *	Send data to MAX5380
+ *	Return PS board connection status
  *
  */
-static uint8_t MAX5380_Send(GPIO_TypeDef * port, uint16_t pin, uint8_t data)
+bool PS_IsConnect(uint8_t device)
 {
-	uint8_t mask = 0x80;
-	while (mask != 0)
-	{	// Set DIN (MSB)
-		HAL_GPIO_WritePin(
-			SDA_GPIO_Port, SDA_Pin,
-			(data & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET
-		);
-
-		// Pulse on SCLK
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		HAL_GPIO_WritePin(port, pin, GPIO_PIN_SET);
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET);
-
-		mask >>= 1;
-	}
-
-	HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, GPIO_PIN_SET);
-	__NOP();
-	__NOP();
-	__NOP();
-	__NOP();
-	HAL_GPIO_WritePin(port, pin, GPIO_PIN_SET);
-	__NOP();
-	__NOP();
-	__NOP();
-	__NOP();
-
-	if (HAL_GPIO_ReadPin(SDA_GPIO_Port, SDA_Pin) == GPIO_PIN_RESET)
-		mask = 1;
-
-	HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET);
-
-	return mask;
+	if (device < PS_BOARD_COUNT)
+		return (PS_Boards[device].MAX5380_Address != 0);
+	return false;
 }
 
-/****************************************************************
- *
- *	Set value MAX5380
- *	Currectly separate SCLK for MAX5380
- *	TODO: Change to general SCL signal
- */
-uint8_t MAX5380_Set(uint8_t device, uint8_t value)
+bool PS_IsNotConnect(uint8_t device)
+{
+	if (device < PS_BOARD_COUNT)
+		return (PS_Boards[device].MAX5380_Address == 0);
+	return true;
+}
+
+static bool MAX5380_SetEx(uint8_t device, uint8_t value, uint8_t shutdown)
 {
 	GPIO_TypeDef * scl_port;
 	uint16_t scl_pin;
-	uint8_t result = 0;
+	uint8_t result = false;
 
 	if (device == 0)
 	{
@@ -80,38 +51,19 @@ uint8_t MAX5380_Set(uint8_t device, uint8_t value)
 	else
 		return result;
 
-	SDA_GPIO_Set();
+	device = PS_Boards[device].MAX5380_Address;
+	if (device == 0)
+		return result;
+	device |= shutdown;
 
-	// Start contintion
-	HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_SET);
-	__NOP();
-	__NOP();
-	__NOP();
-	__NOP();
-	HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_RESET);
-	if (MAX5380_Send(scl_port, scl_pin, device))
-	{
-		// Device respone
-		if (MAX5380_Send(scl_port, scl_pin, value))
-		{
-			result = 1;
-		}
-	}
+	i2c_start(scl_port, scl_pin);
 
-	// Stop contintion
-	__NOP();
-	__NOP();
-	__NOP();
-	__NOP();
-	HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_SET);
-	__NOP();
-	__NOP();
-	__NOP();
-	__NOP();
-	HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, GPIO_PIN_SET);
+	if (i2c_write(scl_port, scl_pin, device)
+	&&	i2c_write(scl_port, scl_pin, value)
+		)
+		result = true;
 
-	SDA_I2C_Set();
+	i2c_stop(scl_port, scl_pin);
 
 	return result;
 }
@@ -121,7 +73,53 @@ uint8_t MAX5380_Set(uint8_t device, uint8_t value)
  *	Shutdown MAX5380
  *
  */
-uint8_t MAX5380_Shutdown(uint8_t device)
+bool MAX5380_Shutdown(uint8_t device)
 {
-	return MAX5380_Set(device | MAX5380_SHDN, 0);
+	if (PS_IsConnect(device))
+		return MAX5380_SetEx(device, 255,  MAX5380_SHDN);
+	return false;
+}
+
+/****************************************************************
+ *
+ *	Set value MAX5380
+ *	Currectly separate SCLK for MAX5380
+ *	TODO: Change to general SCL signal
+ */
+bool MAX5380_Set(uint8_t device, uint8_t value)
+{
+	if (PS_IsConnect(device))
+		return MAX5380_SetEx(device, value, 0);
+	return false;
+}
+
+/****************************************************************
+ *
+ *	Initialize MAX5380
+ *
+ */
+const uint8_t MAX5380x[] = {
+	MAX5380L,
+	MAX5380M,
+	MAX5380N,
+	MAX5380P,
+	0
+};
+
+void MAX5380_Init(void)
+{
+	uint8_t device;
+	const uint8_t * address;
+
+	for (device = 0; device < PS_BOARD_COUNT; device++)
+	{
+		address = MAX5380x;
+		for(;;)
+		{
+			PS_Boards[device].MAX5380_Address = *address;
+			if (*address == 0 || MAX5380_Shutdown(device))
+				break;
+			address++;
+		}
+	}
 }

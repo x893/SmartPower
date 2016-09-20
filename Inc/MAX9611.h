@@ -1,7 +1,8 @@
-#ifndef __MAX5400_H__
-#define __MAX5400_H__
+#ifndef __MAX9611_H__
+#define __MAX9611_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "i2c.h"
 
 #define MAX9611_DEV_00	0xE0
@@ -80,7 +81,9 @@
 	extern "C" {
 #endif
 
-void MAX9611_Init(uint8_t device);
+void MAX9611_Init(void);
+bool MAX9611_Read(uint8_t device);
+bool MAX9611_Write(uint8_t device, uint8_t address, uint8_t data);
 
 #ifdef __cplusplus
 	}

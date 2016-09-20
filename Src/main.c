@@ -46,6 +46,7 @@
 #include "usart_board.h"
 #include "eeprom.h"
 
+#include "MAX5380.h"
 #include "MAX5400.h"
 #include "MAX16936.h"
 #include "MAX9611.h"
@@ -149,7 +150,6 @@ int main(void)
   MX_ADC_Init();
   MX_I2C1_Init();
   MX_TIM3_Init();
-  MX_I2C2_Init();
   MX_CRC_Init();
 
   /* USER CODE BEGIN 2 */
@@ -161,34 +161,58 @@ int main(void)
 
 	Config_Init();
 
+	i2c_init();
+
+	MAX5380_Init();
+	MAX9611_Init();
+
 	MAX16936_Disable(0);
 	MAX16936_Disable(1);
+
 	MAX5400_Set(0, Config.MAX5400_0);
 	MAX5400_Set(1, Config.MAX5400_1);
+
 	MAX16936_Enable(0);
 	MAX16936_Enable(1);
 	
-	Config_Save();
-
 	HAL_ADC_Start_IT(&hadc);	// Start ADC conversion
 	usart2_start();
 
-	uint8_t data;
+	uint8_t data = 0;
 	while (1)
 	{
+/*
 		while (usart2_read(&data))
 		{
 			usart2_send(&data, 1);
 			continue;
 		}
 		__WFI();
+*/
 
-		/*
+		//	Set POT value (MAX5480)
+		// MAX5400_Set(0, data);
+		// MAX5400_Set(1, data);
+
+		//	Read all registers (for 2.0V SET = 0xFFE = 1.1V)
+		MAX9611_Read(0);
+
+		//	Set DAC level (MAX5380) - maximum 2.0V
+		MAX5380_Set(0, data);
+
+		data++;
+
 		LED_ON();
-		HAL_Delay(250);
+		HAL_Delay(100);
+
+		if (data == 0)
+		{
+			HAL_Delay(800);
+		}
+
 		LED_OFF();
-		HAL_Delay(250);
-		*/
+		HAL_Delay(100);
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */

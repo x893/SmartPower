@@ -91,8 +91,10 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PBPin PBPin PBPin PBPin */
-  GPIO_InitStruct.Pin = MAX5380_SCL1_Pin|MAX5380_SCL0_Pin|MAX5400_SCL0_Pin|MAX5400_SCL1_Pin;
+  /*Configure GPIO pins : PBPin PBPin PBPin PBPin 
+                           PBPin PBPin */
+  GPIO_InitStruct.Pin = MAX5380_SCL1_Pin|MAX5380_SCL0_Pin|SCL_Pin|SDA_Pin 
+                          |MAX5400_SCL0_Pin|MAX5400_SCL1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -131,8 +133,8 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, LCD_RS_Pin|LCD_RST_Pin|MAX16936_EN0_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, MAX5380_SCL1_Pin|MAX5380_SCL0_Pin|MAX5400_CS0_Pin|MAX5400_CS1_Pin 
-                          |LED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, MAX5380_SCL1_Pin|MAX5380_SCL0_Pin|SCL_Pin|SDA_Pin 
+                          |MAX5400_CS0_Pin|MAX5400_CS1_Pin|LED_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, MAX5400_SCL0_Pin|MAX5400_SCL1_Pin|MAX16936_EN1_Pin, GPIO_PIN_RESET);
