@@ -165,6 +165,7 @@ int main(void)
 
 	MAX5380_Init();
 	MAX9611_Init();
+	MAX1169_Init();
 
 	MAX16936_Disable(0);
 	MAX16936_Disable(1);
@@ -178,7 +179,9 @@ int main(void)
 	HAL_ADC_Start_IT(&hadc);	// Start ADC conversion
 	usart2_start();
 
-	uint8_t data = 0;
+	uint8_t dac = 0;
+	uint8_t pot = 90;
+
 	while (1)
 	{
 /*
@@ -190,28 +193,27 @@ int main(void)
 		__WFI();
 */
 
-		//	Set POT value (MAX5480)
-		// MAX5400_Set(0, data);
-		// MAX5400_Set(1, data);
-
-		//	Read all registers (for 2.0V SET = 0xFFE = 1.1V)
-		MAX9611_Read(0);
-
-		//	Set DAC level (MAX5380) - maximum 2.0V
-		MAX5380_Set(0, data);
-
-		data++;
-
 		LED_ON();
 		HAL_Delay(100);
 
-		if (data == 0)
-		{
-			HAL_Delay(800);
-		}
+		//	Set POT value (MAX5480)
+		MAX5400_Set(0, pot);
+		pot--;
+		if (pot == 75)
+			pot = 90;
+
+		//	Read all registers (for 2.0V SET = 0xFFE = 1.1V)
+		MAX9611_Read(0);
+		MAX1169_Read(0);
+
+		//	Set DAC level (MAX5380) - maximum 2.0V
+		MAX5380_Set(0, dac);
+		dac++;
+		if (dac == 0)
+			HAL_Delay(1000);
 
 		LED_OFF();
-		HAL_Delay(100);
+		HAL_Delay(400);
 
   /* USER CODE END WHILE */
 

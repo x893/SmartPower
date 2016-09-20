@@ -15,11 +15,15 @@ typedef __packed struct {
 	uint16_t	SET;
 	uint16_t	TEMP;
 	uint16_t	CR;
-	uint8_t		ACK;
 } MAX9611_Data_t;
 
-MAX9611_Data_t MAX9611_0_Data;
-MAX9611_Data_t MAX9611_1_Data;
+typedef __packed struct {
+	MAX9611_Data_t	Data;
+		uint8_t		ACK;
+} MAX9611_DataEx_t;
+
+MAX9611_DataEx_t MAX9611_0_Data;
+MAX9611_DataEx_t MAX9611_1_Data;
 
 /****************************************************************
  *
@@ -37,7 +41,7 @@ bool MAX9611_Write(uint8_t device, uint8_t address, uint8_t data)
 	else
 		return ack;
 
-	i2c_reset();
+	i2c_reset(SCL_GPIO_Port, SCL_Pin);
 	i2c_start(SCL_GPIO_Port, SCL_Pin);
 
 	if (i2c_write(SCL_GPIO_Port, SCL_Pin, device)
@@ -53,20 +57,30 @@ bool MAX9611_Write(uint8_t device, uint8_t address, uint8_t data)
 
 /****************************************************************
  *
+ *	Convert registers MAX9611 to uint16_t
+ *	+0: M7 M6 M5 M4 M3 M2 M1 M0
+ *	
+ */
+__STATIC_INLINE void MAX9611_Convert(__packed uint16_t * pData)
+{
+	uint16_t data = *pData;
+	*pData = (((data & 0xFF) << 4) | (data >> 12));
+}
+
+/****************************************************************
+ *
  *	Read registers MAX9611
  *
  */
-static uint16_t MAX9611_Convert(uint16_t data)
-{
-	return (((data & 0xFF) << 4) | (data >> 12));
-}
-
 bool MAX9611_Read(uint8_t device)
 {
 	bool ack = false;
-	MAX9611_Data_t * pData;
+	MAX9611_DataEx_t * pData;
 
 	pData->ACK = 0;
+	
+	if (PS_IsConnect(device))
+		return ack;
 
 	if (device == 0)
 	{
@@ -81,7 +95,7 @@ bool MAX9611_Read(uint8_t device)
 	else
 		return ack;
 
-	i2c_reset();
+	i2c_reset(SCL_GPIO_Port, SCL_Pin);
 	i2c_start(SCL_GPIO_Port, SCL_Pin);
 
 	if (i2c_write(SCL_GPIO_Port, SCL_Pin, device)
@@ -91,15 +105,15 @@ bool MAX9611_Read(uint8_t device)
 		i2c_start(SCL_GPIO_Port, SCL_Pin);
 		if (i2c_write(SCL_GPIO_Port, SCL_Pin, device | MAX9611_READ))
 		{
-			i2c_read(SCL_GPIO_Port, SCL_Pin, (uint8_t *)pData, sizeof(MAX9611_Data_t));
+			i2c_read(SCL_GPIO_Port, SCL_Pin, (uint8_t *)&pData->Data, sizeof(MAX9611_Data_t));
 
 			pData->ACK = 1;
 
-			pData->CSA	= MAX9611_Convert(pData->CSA);
-			pData->RS	= MAX9611_Convert(pData->RS);
-			pData->OUT	= MAX9611_Convert(pData->OUT);
-			pData->SET	= MAX9611_Convert(pData->SET);
-			pData->TEMP	= MAX9611_Convert(pData->TEMP);
+			MAX9611_Convert(&pData->Data.CSA);
+			MAX9611_Convert(&pData->Data.RS);
+			MAX9611_Convert(&pData->Data.OUT);
+			MAX9611_Convert(&pData->Data.SET);
+			MAX9611_Convert(&pData->Data.TEMP);
 
 			ack = true;
 		}
@@ -117,25 +131,19 @@ bool MAX9611_Read(uint8_t device)
  */
 void MAX9611_Init(void)
 {
-	if (PS_IsConnect(0))
+	if (MAX9611_Write(0, MAX9611_CR1, MAX9611_CR1_MUX)
+	&&	MAX9611_Write(0, MAX9611_CR2, 0)
+		)
 	{
-		if (MAX9611_Write(0, MAX9611_CR1, MAX9611_CR1_MUX)
-		&&	MAX9611_Write(0, MAX9611_CR2, 0)
-			)
-		{
-			HAL_Delay(15);
-			MAX9611_Read(0);
-		}
+		HAL_Delay(15);
+		MAX9611_Read(0);
 	}
 
-	if (PS_IsConnect(1))
+	if (MAX9611_Write(1, MAX9611_CR1, MAX9611_CR1_MUX)
+	&&	MAX9611_Write(1, MAX9611_CR2, 0)
+		)
 	{
-		if (MAX9611_Write(1, MAX9611_CR1, MAX9611_CR1_MUX)
-		&&	MAX9611_Write(1, MAX9611_CR2, 0)
-			)
-		{
-			HAL_Delay(15);
-			MAX9611_Read(1);
-		}
+		HAL_Delay(15);
+		MAX9611_Read(1);
 	}
 }

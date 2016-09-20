@@ -56,6 +56,7 @@ static bool MAX5380_SetEx(uint8_t device, uint8_t value, uint8_t shutdown)
 		return result;
 	device |= shutdown;
 
+	i2c_reset(scl_port, scl_pin);
 	i2c_start(scl_port, scl_pin);
 
 	if (i2c_write(scl_port, scl_pin, device)

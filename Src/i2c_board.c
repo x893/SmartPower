@@ -1,14 +1,5 @@
 #include "i2c_board.h"
 
-#define SCL_HIGH()	HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_SET)
-#define SCL_LOW()	HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_RESET)
-
-#define SDA_HIGH()	HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, GPIO_PIN_SET)
-#define SDA_LOW()	HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, GPIO_PIN_RESET)
-#define SDA_READ()	HAL_GPIO_ReadPin(SDA_GPIO_Port, SDA_Pin)
-
-#define DELAY_4()	do { __NOP();__NOP();__NOP();__NOP(); } while (0)
-
 void i2c_start(GPIO_TypeDef * scl_port, uint16_t scl_pin)
 {
 	SDA_HIGH();
@@ -139,9 +130,12 @@ void i2c_init(void)
 	for (retry_count = 80; retry_count != 0; retry_count--)
 	{
 		DELAY_4();
+		DELAY_4();
 		SCL_ALL_LOW();
 		DELAY_4();
+		DELAY_4();
 		SCL_ALL_HIGH();
+		DELAY_4();
 		DELAY_4();
 	}
 
@@ -159,7 +153,9 @@ void i2c_init(void)
 		SCL_ALL_HIGH();
 	}
 
-	i2c_reset();
+	i2c_reset(SCL_GPIO_Port, SCL_Pin);
+	i2c_reset(MAX5380_SCL0_GPIO_Port, MAX5380_SCL0_Pin);
+	i2c_reset(MAX5380_SCL1_GPIO_Port, MAX5380_SCL1_Pin);
 
 	retry_count = 10;
 	while (SDA_READ() == GPIO_PIN_RESET && retry_count != 0)
@@ -174,14 +170,14 @@ void i2c_init(void)
 	}
 }
 
-void i2c_reset(void)
+void i2c_reset(GPIO_TypeDef * scl_port, uint16_t scl_pin)
 {
 	DELAY_4();
 	SDA_LOW();
 	DELAY_4();
-	HAL_GPIO_WritePin(SCL_GPIO_Port, SCL_Pin, GPIO_PIN_RESET);
+	SCL_LOW();
 	DELAY_4();
-	HAL_GPIO_WritePin(SCL_GPIO_Port, SCL_Pin, GPIO_PIN_SET);
+	SCL_HIGH();
 	DELAY_4();
 	SDA_HIGH();
 	DELAY_4();
